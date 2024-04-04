@@ -48,6 +48,14 @@ pred Send [from , to : Principal , seqnum : Int , d : Data ] {
 // ’seqnum ’ and data ’d’
 pred Recv [from , to : Principal , seqnum : Int , d : Data ] {
 	// FILL IN HERE
+	lone State.network
+	( some m : Message | m.src = from and m. dest = to and m. seq_num = seqnum
+	and seqnum = State . recv_counter [to ,from] and m. data = d
+	and m in State . network)
+	State . send_counter ’ = State . send_counter
+	State . recv_counter ’ = State . recv_counter++ ( to -> from -> (add[seqnum ,1]))
+	State . channel_state ’ = State . channel_state
+	State . debug_last_action ’ = RecvAction
 }
 
 // models the establishment of a secure channel

@@ -35,8 +35,12 @@ one sig State {
 // ’seqnum ’ and data ’d’
 pred Send [from , to : Principal , seqnum : Int , d : Data ] {
 	no State . network
-	( some m : Message | m.src = from and m. dest = to and m. seq_num = seqnum
-	and seqnum = State . send_counter [from ,to] and m. data = d
+	( some m : Message |
+	 m.src = from 
+	and m. dest = to 
+	and m. seq_num = seqnum
+	and seqnum = State . send_counter [from ,to] 
+	and m. data = d
 	and m in State . network ’)
 	State . send_counter ’ = State . send_counter ++ ( from -> to -> (add[seqnum ,1]))
 	State . recv_counter ’ = State . recv_counter
@@ -47,15 +51,18 @@ pred Send [from , to : Principal , seqnum : Int , d : Data ] {
 // receiver ’to ’ receives a message from sender ’from ’ with sequence number
 // ’seqnum ’ and data ’d’
 pred Recv [from , to : Principal , seqnum : Int , d : Data ] {
-	// FILL IN HERE
-	lone State.network
-	( some m : Message | m.src = from and m. dest = to and m. seq_num = seqnum
-	and seqnum = State . recv_counter [to ,from] and m. data = d
-	and m in State . network)
-	State . send_counter ’ = State . send_counter
-	State . recv_counter ’ = State . recv_counter++ ( to -> from -> (add[seqnum ,1]))
-	State . channel_state ’ = State . channel_state
-	State . debug_last_action ’ = RecvAction
+	one (State.network)
+	(some m:Message | 
+	m.src = from 
+	and m.dest = to 
+	and m.seq_num = seqnum
+	and seqnum = State.recv_counter[to][from] 
+	and m.data = d 
+	and m not in State.network’)
+	State.recv_counter’ = State.recv_counter ++ (to -> from -> (add[seqnum, 1]))
+	State.send_counter’ = State.send_counter
+	State.channel_state’ = State.channel_state
+	State.debug_last_action’ = RecvAction
 }
 
 // models the establishment of a secure channel
@@ -95,6 +102,7 @@ pred State_Transition {
 	or
 	Attacker_Action
 }
+
 pred Do_Nothing {
 	State . send_counter ’ = State . send_counter
 	State . recv_counter ’ = State . recv_counter
@@ -107,3 +115,27 @@ fact traces {
 	Init and
 	( always State_Transition )
 }
+
+// Task 1.2 assertion in_sync_always
+assert in_sync_always{
+	all s:State, from:Principal, to:Principal | 
+	always (s.send_counter[from,to] = s.recv_counter [to ,from])
+}
+
+// Task 1.3 assertion in_sync NOT SURE
+assert in_sync{
+	all s:State, from:Principal, to:Principal |
+	no s.network implies s.send_counter[from,to] = s.recv_counter [to ,from]
+}
+
+check in_sync_always for 2 but 1 State
+check in_sync for 2 but 1 State
+
+pred sendRecv[] {
+    some a: Principal, b: Principal, seqnum: Int, d: Data | {
+        Send[a, b, seqnum, d];
+        Recv[a, b, seqnum, d]    
+    }
+}
+
+run sendRecv for 2 but 1 State, 2 Principal

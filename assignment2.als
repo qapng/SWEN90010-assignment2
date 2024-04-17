@@ -68,9 +68,17 @@ pred Recv [from , to : Principal , seqnum : Int , d : Data ] {
 
 // models the establishment of a secure channel
 pred Go_Secure {
-	// TODO reset sequence number here maybe
 	no State . network
+
+	// Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
+	// ( 
+	// 	all a,b: Principal |
+	// 	State.send_counter’ [ a, b ] = 0
+	// 	and State.recv_counter’ [ b, a ] = 0
+	// )
+
 	State . channel_state = Insecure and State . channel_state ’ = Secure
+	// Comment out 2 lines below for Task 2.1, 2.2, 2.3. Uncomment otherwise
 	State . send_counter ’ = State . send_counter
 	State . recv_counter ’ = State . recv_counter
 	State . network ’ = State . network
@@ -149,8 +157,8 @@ fact traces {
 
 // Task 1.2 assertion in_sync_always
 assert in_sync_always{
-	all from:Principal, to:Principal | 
-	always (State.send_counter[from,to] = State.recv_counter [to ,from])
+	always all from:Principal, to:Principal | 
+	State.send_counter[from,to] = State.recv_counter [to ,from]
 }
 //in_sync_always will not hold in general
 //assume 2 principals A and B, principal A will be the first to send messages over the channel.
@@ -161,39 +169,41 @@ assert in_sync_always{
 
 // Task 1.3 assertion in_sync NOT SURE
 assert in_sync{
-	all from, to:Principal, seqnum : Int , d : Data |
+	always all from, to:Principal, seqnum : Int , d : Data |
 	// no State.network implies State.send_counter[from,to] = State.recv_counter [to ,from]
 	Recv[from,to,seqnum,d] implies after (State.send_counter[from,to] = State.recv_counter [to ,from])
 }
 
 
 // Task 1.4
-// If the system is secured, it implies that for all state after that,
-// with all combination of principals and 2 messages, if recieves m2 then
-// recieves m1 sincce secured, send m1 and m2 since secured
 assert security_goal {
-	Go_Secure implies (
-	(
-		always all a: Principal, b: Principal, m1, m2: Message |
+		always all a: Principal, b: Principal, seqnum1,seqnum2: Int, d: Data |
+
 		(
-			m1 != m2 and m1.seq_num = 0 and m2.seq_num = 1
-			and Recv[a, b, m2.seq_num, m2.data]
+			Recv[a, b, seqnum2, d] 
+			and State.channel_state = Secure 
 		) 
-		implies 
+		implies
 		(
-			(Recv[a, b, m1.seq_num, m1.data] since Go_Secure )
-			and (Send[a, b, m1.seq_num, m1.data] since Go_Secure )
-			and (Send[a, b, m2.seq_num, m2.data] since Go_Secure )
-		)
-	)
-	)
+			(once (Send[a, b, seqnum2, d] and State.channel_state = Secure)) implies
+			(once (Send[a, b, seqnum1, d] and State.channel_state = Secure)) implies
+			(once (Recv[a, b, seqnum1, d] and State.channel_state = Secure))
+		) 
 }
+
+
 
 assert test {
 	always all from, to:Principal, seqnum : Int , d : Data |
-	Recv[from,to,seqnum,d] implies historically (Send[from,to,seqnum,d])
+	(Recv[from,to,seqnum,d] and seqnum = 1 and State.channel_state = Secure) implies 
+	(
+		once
+		(
+			Recv[from,to,0,d] and State.channel_state = Secure
+		)
+	)
 }
-check security_goal for 2 but 3 Message
+check security_goal for 2 but 5..10 steps
 check test for 2
 
 check in_sync_always for 2 
@@ -245,7 +255,6 @@ pred attackTestRemove[] {
 pred pretruncAttack[]{
 	some a: Principal, b: Principal, seqnum1,seqnum2,seqnum3: Int, d: Data | 
 	{
-		// Attacker_Action;
 		Attacker_Action;
 		Recv[a, b, seqnum1, d];
 		Go_Secure;
@@ -256,10 +265,19 @@ pred pretruncAttack[]{
     }
 }
 
+pred goSecure[]{
+	some a: Principal, b: Principal, seqnum1: Int, d: Data | 
+	{
+		Send[a, b, seqnum1, d];
+		Recv[a, b, seqnum1, d];
+		Go_Secure
+    }
+}
 
 
-run sendRecv for 2 but 1 State
-run attackTestInject for 2 but 1 State
-run attackTestModify for 2 but 1 State
-run attackTestRemove for 2 but 1 State
-run pretruncAttack for 2 but 4 Message
+run goSecure for 2
+run sendRecv for 2 
+run attackTestInject for 2 
+run attackTestModify for 2 
+run attackTestRemove for 2 
+run pretruncAttack for 2 but 3 Message

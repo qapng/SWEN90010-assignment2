@@ -152,6 +152,12 @@ assert in_sync_always{
 	all from:Principal, to:Principal | 
 	always (State.send_counter[from,to] = State.recv_counter [to ,from])
 }
+//in_sync_always will not hold in general
+//assume 2 principals A and B, principal A will be the first to send messages over the channel.
+//the sending order is A-B-A-B-A-B-...
+//After B sends a message to A and A receives, the counter will now be synced.
+//If A then sends a message to B and B receives, only the send_counter for A and recv_counter for B will be incremented
+//A's send_counter will be 1 more than B's, and B's recv_counter will be 1 more than A's
 
 // Task 1.3 assertion in_sync NOT SURE
 assert in_sync{
@@ -160,7 +166,8 @@ assert in_sync{
 	Recv[from,to,seqnum,d] implies after (State.send_counter[from,to] = State.recv_counter [to ,from])
 }
 
-// Task 1.6
+
+// Task 1.4
 // If the system is secured, it implies that for all state after that,
 // with all combination of principals and 2 messages, if recieves m2 then
 // recieves m1 sincce secured, send m1 and m2 since secured
@@ -193,6 +200,11 @@ check in_sync_always for 2
 
 // TODO explain when the assertion is violated when attacker attacks 
 check in_sync for 2 but 1 State
+//assuming there are no attackers in the system, and there are 2 principals A and B
+//in_sync checks if the send_counter of A is the same as the recv_counter of B
+//and vice versa, after each message is received
+//it will hold since the number of messages sent is always equal to the number of messages received
+//given the assumption above that there's no interference with the sending/receiving process in the network
 
 pred sendRecv[] {
     some a: Principal, b: Principal, seqnum,seqnum2: Int, d: Data | 

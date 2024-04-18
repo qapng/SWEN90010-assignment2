@@ -80,17 +80,17 @@ pred Go_Secure {
 
 	// The following block of code models the reset of the sequence number
 	// Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
-	// ( 
-	// 	all a,b: Principal |
-	// 	State.send_counter’ [ a, b ] = 0
-	// 	and State.recv_counter’ [ b, a ] = 0
-	// )
+	( 
+		all a,b: Principal |
+		State.send_counter’ [ a, b ] = 0
+		and State.recv_counter’ [ b, a ] = 0
+	)
 
 	State . channel_state = Insecure and State . channel_state ’ = Secure
 
 	// Comment out 2 lines below for Task 2.1, 2.2, 2.3. Uncomment otherwise
-	State . send_counter ’ = State . send_counter
-	State . recv_counter ’ = State . recv_counter
+	// State . send_counter ’ = State . send_counter
+	// State . recv_counter ’ = State . recv_counter
 
 	State . network ’ = State . network
 	State . debug_last_action ’ = GoSecureAction
@@ -213,7 +213,7 @@ assert security_goal {
 //and both m1 and m3 must have been sent.
 //The receiver will not, however, know about the existence of m2, even though it was sent earlier by the sender.
 //
-check security_goal for 2 but 5..10 steps
+check security_goal for 2 but 5..15 steps
 
 check in_sync_always for 2 
 
@@ -245,6 +245,19 @@ pred sendRecv[] {
 //We set the send_counter and recv_counter, for the next state, for all principals to 0,
 //while commenting out the 2 lines that say "State.send_counter’ = State.send_counter and State.recv_counter = State.recv_counter' "
 //This is to ensure the sequence number is not set to the wrong value after we reset it
+
+//Task 2.2
+//The assertion now holds, as long as the marker comment and uncomment the pieces of code as instructed
+//There are two elements to our security goal check, bound and steps.
+//For bound, we decide that 2 is enough. The reason being if the system has more than 2 principals, principals still have
+//to form pairs to communicate (eg. A and B, B and C, C and A, given 3 principals). Therefore, if we can detect any
+//problem within 2 principals, we can generalise that to any number of principals.
+
+//For steps, we decide that detecting counter examples ranging from 5 to 15 steps is enough. The reason is that our prefix
+//truncation attack is a generalised version in the sense that it performs no redundant operations, and we manage to detect 
+//only one counter example that is 8 steps long (when we use 5..10 steps). Therefore, we believe it's highly likely that a larger number of steps
+//will not result in a longer counter example. 10 steps is too close to the length of our counter example, so we decided to 
+//use 5..15 steps to make sure we don't miss any counter examples.
 
 //Task 2.3
 //One obvious vulnerability is that attackers can attack the handshake protocol, whether with modification, injection or removal of messages.

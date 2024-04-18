@@ -70,7 +70,7 @@ pred Recv [from , to : Principal , seqnum : Int , d : Data ] {
 pred Go_Secure {
 	no State . network
 
-	// Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
+	//Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
 	// ( 
 	// 	all a,b: Principal |
 	// 	State.send_counter’ [ a, b ] = 0
@@ -281,3 +281,22 @@ run attackTestInject for 2
 run attackTestModify for 2 
 run attackTestRemove for 2 
 run pretruncAttack for 2 but 3 Message
+
+//Task 2.1
+//We reset the sequence number at the beginning of the Go_Secure predicate.
+//We set the send_counter and recv_counter, for the next state, for all principals to 0,
+//while commenting out the 2 lines that say "State.send_counter’ = State.send_counter and State.recv_counter = State.recv_counter' "
+//This is to ensure the sequence number is not set to the wrong value after we reset it
+
+//Task 2.3
+
+//One obvious vulnerability is that attackers can attack the handshake protocol, whether with modification, injection or removal of messages.
+//Because the handshake is formed on the basis of a fixed list of handshake messages instead of the whole transcript when setting up the handshake,
+//attackers can manipulate the messages in different ways and cause the handshake to fail.
+//The principals will then not be able to establish a secure communication channel.
+
+//Second vulnerability is that if principal A keeps sending messages out but is interrupted and removed by the attackers, 
+//the system will not be able to detect that, as the messages will be sent and received in order, which doesn't violate our security goal
+//To be specific, due to the simplification of the ststem, the goal states that in order to receive a message, all messages must have been sent and the receiving principal must have received any previous messages in that order.
+//However, it means a principal can keep sending messages without the other principal having to receive them.
+

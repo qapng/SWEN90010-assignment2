@@ -70,7 +70,8 @@ pred Recv [from , to : Principal , seqnum : Int , d : Data ] {
 pred Go_Secure {
 	no State . network
 
-	//Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
+	// The following block of code models the reset of the sequence number
+	// Comment out the 5 lines below for Task 1.1, 1.2, 1.3, 1.4. Uncomment otherwise
 	// ( 
 	// 	all a,b: Principal |
 	// 	State.send_counter’ [ a, b ] = 0
@@ -78,19 +79,20 @@ pred Go_Secure {
 	// )
 
 	State . channel_state = Insecure and State . channel_state ’ = Secure
+
 	// Comment out 2 lines below for Task 2.1, 2.2, 2.3. Uncomment otherwise
 	State . send_counter ’ = State . send_counter
 	State . recv_counter ’ = State . recv_counter
+
 	State . network ’ = State . network
 	State . debug_last_action ’ = GoSecureAction
 }
 
 pred Attacker_Action {
-	// send message or modify message
-	// Inject: no message in network and channel insecure
-	// Remove: message in network
-	// Modify: one message in network and channel insecure
-	// FILL IN STUFF HERE to define how the attacker can affect State . network ’
+	// Attackers can:
+	// Inject: when there is no message in network and the channel is insecure
+	// Modify: when there is a message in network and the channel is insecure
+	// Remove: when there is a message in network (regardless of channel state)
 	Attacker_Modify 
 	or Attacker_Remove 
 	or Attacker_Inject
@@ -100,26 +102,26 @@ pred Attacker_Action {
 	State . debug_last_action ’ = AttackerAction
 }
 
-// Similar to Send but no modify counter
+// Add a new message to into the network
 pred Attacker_Inject{
 	no State . network and one State . network’
 	and State . channel_state = Insecure
  
 }
 
-// Similar to Recv but no modify counter
+// Remove a message from the network
 pred Attacker_Remove{
 	one State.network and no State.network ’
 }
 
-// Modify message = remove message and inject new message but no modify counter
+// Modify message is equivalent to removing a message and injecting a new one
 pred Attacker_Modify{
 	one State.network and one State.network’ 
 	and State . channel_state = Insecure
 	( some m1,m2 : Message |
 	m1 != m2
 	and m1 not in State . network ’
-	and m2 in State . network ’’)
+	and m2 in State . network ’)
 }
 
 // the initial state
@@ -191,25 +193,14 @@ assert security_goal {
 		) 
 }
 
-
-
-assert test {
-	always all from, to:Principal, seqnum : Int , d : Data |
-	(Recv[from,to,seqnum,d] and seqnum = 1 and State.channel_state = Secure) implies 
-	(
-		once
-		(
-			Recv[from,to,0,d] and State.channel_state = Secure
-		)
-	)
-}
+// To check that there is a vulnerability (before adding the fix) 
+// and to confirm that the fix works
 check security_goal for 2 but 5..10 steps
-check test for 2
 
 check in_sync_always for 2 
 
 // TODO explain when the assertion is violated when attacker attacks 
-check in_sync for 2 but 1 State
+check in_sync for 2 
 //assuming there are no attackers in the system, and there are 2 principals A and B
 //in_sync checks if the send_counter of A is the same as the recv_counter of B
 //and vice versa, after each message is received
@@ -227,69 +218,13 @@ pred sendRecv[] {
     }
 }
 
-pred attackTestInject[] {
-    some a: Principal, b: Principal, seqnum: Int, d: Data | 
-	{
-        Attacker_Action;
-		Recv[a, b, seqnum, d]
-    }
-}
-
-pred attackTestModify[] {
-    some a: Principal, b: Principal, seqnum: Int, d: Data | 
-	{
-        Send[a, b, seqnum, d];
-        Attacker_Action
-    }
-}
-
-pred attackTestRemove[] {
-    some a: Principal, b: Principal, seqnum: Int, d: Data | 
-	{
-        Go_Secure;
-		Send[a, b, seqnum, d];
-        Attacker_Action
-    }
-}
-
-pred pretruncAttack[]{
-	some a: Principal, b: Principal, seqnum1,seqnum2,seqnum3: Int, d: Data | 
-	{
-		Attacker_Action;
-		Recv[a, b, seqnum1, d];
-		Go_Secure;
-		Send[a, b, seqnum2, d];
-		Attacker_Action;
-		Send[a, b, seqnum3, d];
-		Recv[a, b, seqnum3, d]
-    }
-}
-
-pred goSecure[]{
-	some a: Principal, b: Principal, seqnum1: Int, d: Data | 
-	{
-		Send[a, b, seqnum1, d];
-		Recv[a, b, seqnum1, d];
-		Go_Secure
-    }
-}
-
-
-run goSecure for 2
-run sendRecv for 2 
-run attackTestInject for 2 
-run attackTestModify for 2 
-run attackTestRemove for 2 
-run pretruncAttack for 2 but 3 Message
-
 //Task 2.1
-//We reset the sequence number at the beginning of the Go_Secure predicate.
+//We reset the sequence number to 0, when the Go_Secure state transition is executed.
 //We set the send_counter and recv_counter, for the next state, for all principals to 0,
 //while commenting out the 2 lines that say "State.send_counter’ = State.send_counter and State.recv_counter = State.recv_counter' "
 //This is to ensure the sequence number is not set to the wrong value after we reset it
 
 //Task 2.3
-
 //One obvious vulnerability is that attackers can attack the handshake protocol, whether with modification, injection or removal of messages.
 //Because the handshake is formed on the basis of a fixed list of handshake messages instead of the whole transcript when setting up the handshake,
 //attackers can manipulate the messages in different ways and cause the handshake to fail.
@@ -297,6 +232,7 @@ run pretruncAttack for 2 but 3 Message
 
 //Second vulnerability is that if principal A keeps sending messages out but is interrupted and removed by the attackers, 
 //the system will not be able to detect that, as the messages will be sent and received in order, which doesn't violate our security goal
-//To be specific, due to the simplification of the ststem, the goal states that in order to receive a message, all messages must have been sent and the receiving principal must have received any previous messages in that order.
+//To be specific, due to the simplification of the ststem, the goal states that in order to receive a message, all messages must have been sent 
+//and the receiving principal must have received any previous messages in that order.
 //However, it means a principal can keep sending messages without the other principal having to receive them.
 

@@ -92,6 +92,7 @@ pred Go_Secure {
 }
 
 //Task 1.1 Attacker_Action predicate, with helper predicates down below
+//comment this predicate out to run check in_sync, task 1.3
 pred Attacker_Action {
 	// Attackers can:
 	// Inject: when there is no message in network and the channel is insecure
@@ -144,6 +145,7 @@ pred State_Transition {
 	Go_Secure
 	or
 	Do_Nothing
+	//comment the 2 lines below to run check in_sync, task 1.3
 	or
 	Attacker_Action
 }
@@ -189,6 +191,7 @@ check in_sync_always for 2
 //thus not satisfying the condition that the receiver’s send and receive counters for the sender mirror the sender’s for the receiver.
 
 // Task 1.3 assertion in_sync in suitable conditions
+//COMMENT OUT Attacker_Action predicate TO RUN THIS CHECK
 assert in_sync{
 	always all from, to:Principal, seqnum : Int , d : Data |
 	// no State.network implies State.send_counter[from,to] = State.recv_counter [to ,from]

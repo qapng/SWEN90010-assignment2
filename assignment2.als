@@ -1,3 +1,5 @@
+//Author 1: Phuc Quang Anh Nguyen - 1025299
+//Author 2: Truong Giang Hoang - 1166323
 sig Principal {}
 
 sig Data {}

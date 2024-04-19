@@ -89,7 +89,7 @@ pred Go_Secure {
 	State . debug_last_action ’ = GoSecureAction
 }
 
-//Task 1.2 Attacker_Action predicate, with helper predicates down below
+//Task 1.1 Attacker_Action predicate, with helper predicates down below
 pred Attacker_Action {
 	// Attackers can:
 	// Inject: when there is no message in network and the channel is insecure
@@ -265,5 +265,11 @@ check security_goal for 2 but 5..15 steps
 //To be specific, due to the simplification of the ststem, the goal states that in order to receive a message, all messages must have been sent 
 //and the receiving principal must have received any previous messages in that order.
 //However, it means a principal can keep sending messages without the other principal having to receive them.
+
+//Third vulnerability involves the simplification that the process of negotiating encryption keys is ignored. Simply put, without encryption key negotiation, 
+//messages sent even in secure phases could be read other people rather than the principals.
+
+//Fourth vulnerability is that when every principal is forced to transition into the secure phase, some principals may not even negotiating for a secure channel.
+//In that case, they cannot provide and receive authentication from other principals, meaning no one knows who they are communicating with.
 
 //TODO probably add an extension downgrade attack, something to do with problems when all parties go secure

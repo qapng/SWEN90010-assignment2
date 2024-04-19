@@ -274,3 +274,4 @@ check in_sync for 2
 //and the receiving principal must have received any previous messages in that order.
 //However, it means a principal can keep sending messages without the other principal having to receive them.
 
+//TODO probably add an extension downgrade attack, something to do with problems when all parties go secure

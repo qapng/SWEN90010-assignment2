@@ -250,9 +250,9 @@ check in_sync for 2
 //Task 2.2
 //The assertion now holds, as long as the marker comment and uncomment the pieces of code as instructed
 //There are two elements to our security goal check, bound and steps.
-//For bound, we decide that 2 is enough. The reason being if the system has more than 2 principals, principals still have
-//to form pairs to communicate (eg. A and B, B and C, C and A, given 3 principals). Therefore, if we can detect any
-//problem within 2 principals, we can generalise that to any number of principals.
+//For bound, we decide that 2 is enough. The reason being with 2 messages only (A to B, B to A), we are able to detect the vulnerability already.
+//If the system are scaled up to multiple principals, it's essentially still pairs of messages being sent and received between any 2 principals,
+//and our lower bound is general enough to detect any vulnerabilities.
 
 //For steps, we decide that detecting counter examples ranging from 5 to 15 steps is enough. The reason is that our prefix
 //truncation attack is a generalised version in the sense that it performs no redundant operations, and we manage to detect 

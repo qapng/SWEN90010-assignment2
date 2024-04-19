@@ -1,11 +1,3 @@
-//TODO 1.1 done
-//TODO 1.2 done with explanation
-//TODO 1.3 done with explanation
-//TODO 1.4 done with explanation
-
-//TODO 2.1 done with explanation
-//TODO 2.2 done
-//TODO 2.3 please complete it
 sig Principal {}
 
 sig Data {}
@@ -184,6 +176,8 @@ assert in_sync_always{
 	always all from:Principal, to:Principal | 
 	State.send_counter[from,to] = State.recv_counter [to ,from]
 }
+
+check in_sync_always for 2 
 //Assume 2 principals A and B are in the system, and there are no attackers.
 //Aslo assume that the send_counter and recv_counter for both A and B are 0 initially.
 //in_sync_always checks if A's send_counter is equal to B's recv_counter, and vice versa, AT ALL TIMES.
@@ -198,6 +192,16 @@ assert in_sync{
 	// no State.network implies State.send_counter[from,to] = State.recv_counter [to ,from]
 	Recv[from,to,seqnum,d] implies after (State.send_counter[from,to] = State.recv_counter [to ,from])
 }
+check in_sync for 2
+//Task 1.3 explanation 
+//Assuming there are no attackers in the system, and there are 2 principals A and B,
+//in_sync checks if the send_counter of A is the same as the recv_counter of B
+//and vice versa, after each message is received.
+//It will hold since the number of messages sent is always equal to the number of messages received,
+//and it only checks the counters once a message, after being sent, is received.
+//To be specific, given the assumption above that there's no interference with the sending/receiving processes,
+//any message sent will be received successfully.
+//The sender's send_counter and receiver's recv_counter will remain equal after that.
 
 // Task 1.4
 assert security_goal {
@@ -214,6 +218,9 @@ assert security_goal {
 			(once (Recv[a, b, seqnum1, d] and State.channel_state = Secure))
 		) 
 }
+
+check security_goal for 2 but 5..15 steps
+
 //The protocol is vulnerable to a prefix truncation attack.
 //The protocol has a problem where it does not provide a way to keep track of and compare 
 //the send_counter and the recv_counter of both principals. Therefore, if a mismatch in counters happens because
@@ -224,21 +231,6 @@ assert security_goal {
 //which satisfies the security goal that in order to receive m3, the receiver must have received m1,
 //and both m1 and m3 must have been sent.
 //The receiver will not, however, know about the existence of m2, even though it was sent earlier by the sender.
-
-check security_goal for 2 but 5..15 steps
-
-check in_sync_always for 2 
-
-check in_sync for 2
-//Task 1.3 explanation 
-//Assuming there are no attackers in the system, and there are 2 principals A and B,
-//in_sync checks if the send_counter of A is the same as the recv_counter of B
-//and vice versa, after each message is received.
-//It will hold since the number of messages sent is always equal to the number of messages received,
-//and it only checks the counters once a message, after being sent, is received.
-//To be specific, given the assumption above that there's no interference with the sending/receiving processes,
-//any message sent will be received successfully.
-//The sender's send_counter and receiver's recv_counter will remain equal after that.
 
 
 //Task 2.1
